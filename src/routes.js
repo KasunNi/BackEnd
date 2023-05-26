@@ -34,6 +34,29 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
+//Admin check middleware
+const adminAuth = async (req, res, next) => {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token, authorization denied' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.SECRET_KEY);
+    const admin = await Admin.findOne({ _id: decoded._id, 'tokens.token': token });
+
+    if (!admin) {
+      throw new Error();
+    }
+
+    req.token = token;
+    req.admin = admin;
+    next();
+  } catch (error) {
+    res.status(401).json({ message: 'Authentication failed' });
+  }
+};
 
 // Admin routes
 // admin routes
@@ -99,12 +122,42 @@ router.patch('/admin/reset-password', async (req, res) => {
   }
 });
 
-router.get('/admin/bookings', async (req, res) => {
+router.get('/admin/bookings', authMiddleware, async (req, res) => {
   try {
     const bookings = await Booking.find();
     res.json({ bookings });
   } catch (error) {
     console.error('Error retrieving bookings:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.get('/admin/customers', adminAuth, async (req, res) => {
+  try {
+    const customers = await Customer.find();
+    res.json({ customers });
+  } catch (error) {
+    console.error('Error retrieving customers:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.get('/admin/admins', authMiddleware, async (req, res) => {
+  try {
+    const admins = await Admin.find();
+    res.json({ admins });
+  } catch (error) {
+    console.error('Error retrieving admins:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.get('/admin/service-advisors', authMiddleware, async (req, res) => {
+  try {
+    const serviceadvisors = await ServiceAdvisor.find();
+    res.json({ serviceadvisors });
+  } catch (error) {
+    console.error('Error retrieving service advisors:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -162,7 +215,7 @@ router.post('/customer/login', async (req, res) => {
 
     const token = jwt.sign({ customerId: customer._id }, process.env.SECRET_KEY, { expiresIn: '1h' });
 
-    res.json({ token });
+    res.json({ token, email });
   } catch (error) {
     console.error('Error during login:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -201,15 +254,67 @@ router.get('/customer/bookings', authMiddleware, async (req, res) => {
   }
 });
 
-router.post('/customer/bookings', async (req, res) => {
-  const { customerId, serviceAdvisorId, date } = req.body;
+router.post('/customer/getbookings', authMiddleware, async (req, res) => {
+  const { email } = req.body;
 
   try {
-    const booking = await Booking.create({ customer: customerId, serviceAdvisor: serviceAdvisorId, date });
+    const bookings = await Booking.find({ email: email });
+    res.json({ bookings });
+  } catch (error) {
+    console.error('Error retrieving customer bookings:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.post('/customer/bookings', async (req, res) => {
+	console.log(req.body);
+  const { email, date, vehicleRegNumber, description, serviceAdvisor  } = req.body;
+
+  try {
+    const booking = await Booking.create({ email, date, vehicleRegNumber, description, serviceAdvisor: serviceAdvisor });
     res.json({ booking });
   } catch (error) {
     console.error('Error creating booking:', error);
     res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.delete('/customer/bookings/:id', async (req, res) => {
+	const { id } = req.body;
+  
+  try {
+    const bookingId = req.params.id;
+    // Find the booking by ID
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    // Check if the logged-in user has permission to delete the booking
+    // Add your custom logic here, based on your application requirements
+    // For example, you can check if the user is the owner of the booking or has admin privileges
+
+    // Delete the booking
+    await booking.deleteOne();
+
+    res.json({ message: 'Booking deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting booking:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// GET route to fetch all service advisors
+router.get('/service-advisors', async (req, res) => {
+  try {
+    // Fetch all service advisors from the database
+    const serviceAdvisors = await ServiceAdvisor.find();
+
+    // Return the service advisors as a response
+    res.json(serviceAdvisors);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'An error occurred while fetching service advisors' });
   }
 });
 
@@ -276,7 +381,7 @@ router.patch('/service-advisor/reset-password', async (req, res) => {
   }
 });
 
-router.get('/service-advisor/bookings', async (req, res) => {
+router.get('/service-advisor/bookings', authMiddleware, async (req, res) => {
   try {
     const bookings = await Booking.find();
     res.json({ bookings });

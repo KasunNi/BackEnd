@@ -59,9 +59,8 @@ const ServiceAdvisor = mongoose.model('ServiceAdvisor', serviceAdvisorSchema);
 
 // Booking model
 const bookingSchema = new mongoose.Schema({
-  customer: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Customer',
+  email: {
+    type: String,
     required: true
   },
   serviceAdvisor: {
@@ -71,6 +70,14 @@ const bookingSchema = new mongoose.Schema({
   },
   date: {
     type: Date,
+    required: true
+  },
+  vehicleRegNumber: {
+    type: String,
+    required: true
+  },
+  description: {
+    type: String,
     required: true
   },
   status: {
