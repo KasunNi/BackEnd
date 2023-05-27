@@ -391,6 +391,57 @@ router.get('/service-advisor/bookings', authMiddleware, async (req, res) => {
   }
 });
 
+router.post('/service-advisor/getbookings', async (req, res) => {
+  const { serviceAdvisorId } = req.body;
+
+  try {
+    const bookings = await Booking.find({ serviceAdvisor: serviceAdvisorId  });
+    res.json({ bookings });
+  } catch (error) {
+    console.error('Error retrieving service advisor bookings:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Get service advisor ID by email
+router.post('/service-advisor/email', async (req, res) => {
+	//console.log(req)
+  const { serviceAdvisorEmail } = req.body;
+
+  try {
+    const serviceAdvisor = await ServiceAdvisor.findOne({ serviceAdvisorEmail });
+    if (!serviceAdvisor) {
+      return res.status(404).json({ message: 'Service advisor not found' });
+    }
+console.log(res);
+    res.json({ serviceAdvisorId: serviceAdvisor._id });
+  } catch (error) {
+    console.error('Error fetching service advisor:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Update booking status
+router.patch('/service-advisor/bookings/:bookingId', async (req, res) => {
+  const { bookingId } = req.params;
+  const { status } = req.body;
+
+  try {
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    booking.status = status;
+    await booking.save();
+
+    res.json({ message: 'Booking status updated successfully' });
+  } catch (error) {
+    console.error('Error updating booking status:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 router.patch('/service-advisor/bookings/:id', async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
