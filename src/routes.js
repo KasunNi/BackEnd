@@ -95,7 +95,7 @@ router.post('/admin/login', async (req, res) => {
 
     const token = jwt.sign({ adminId: admin._id }, process.env.SECRET_KEY, { expiresIn: '1h' });
 
-    res.json({ token });
+    res.json({ token, email });
   } catch (error) {
     console.error('Error during login:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -354,7 +354,7 @@ router.post('/service-advisor/login', async (req, res) => {
 
     const token = jwt.sign({ serviceAdvisorId: serviceAdvisor._id }, process.env.SECRET_KEY, { expiresIn: '1h' });
 
-    res.json({ token });
+    res.json({ token, email });
   } catch (error) {
     console.error('Error during login:', error);
     res.status(500).json({ message: 'Internal server error' });
