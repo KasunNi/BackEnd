@@ -89,4 +89,48 @@ const bookingSchema = new mongoose.Schema({
 
 const Booking = mongoose.model('Booking', bookingSchema);
 
-module.exports = { Admin, Customer, ServiceAdvisor, Booking };
+
+
+
+
+// Service Package schema
+const servicePackageSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true
+  },
+  description: {
+    type: String,
+    required: true
+  },
+  price: {
+    type: Number,
+    required: true
+  }
+});
+
+const ServicePackage = mongoose.model('ServicePackage', servicePackageSchema);
+
+
+
+// Service Center schema
+const serviceCenterSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true
+  },
+  location: {
+    type: String,
+    required: true
+  },
+  contactNumber: {
+    type: String,
+    required: true
+  }
+});
+
+
+const ServiceCenter = mongoose.model('ServiceCenter', serviceCenterSchema);
+
+
+module.exports = { Admin, Customer, ServiceAdvisor, Booking, ServicePackage, ServiceCenter  };

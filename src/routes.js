@@ -122,12 +122,14 @@ router.patch('/admin/reset-password', async (req, res) => {
   }
 });
 
-router.get('/admin/bookings', authMiddleware, async (req, res) => {
+router.post('/admin/getbookings', authMiddleware, async (req, res) => {
+  const { email } = req.body;
+
   try {
     const bookings = await Booking.find();
     res.json({ bookings });
   } catch (error) {
-    console.error('Error retrieving bookings:', error);
+    console.error('Error retrieving customer bookings:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
