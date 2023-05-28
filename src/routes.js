@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Admin, Customer, ServiceAdvisor, Booking } = require('./models');
+const { Admin, Customer, ServiceAdvisor, Booking, ServiceCenter, ServicePackage } = require('./models');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 //const config = require('./config');
@@ -164,6 +164,17 @@ router.get('/admin/service-advisors', authMiddleware, async (req, res) => {
   }
 });
 
+
+router.get('/admin/service-centers', authMiddleware, async (req, res) => {
+  try {
+    const servicecenters = await ServiceCenter.find();
+    res.json({ servicecenters });
+  } catch (error) {
+    console.error('Error retrieving service centers:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 router.patch('/admin/bookings/:id', async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
@@ -180,6 +191,43 @@ router.patch('/admin/bookings/:id', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+// Add Service Center
+router.post('/admin/service-center', async (req, res) => {
+	 const { name, location, contactNumber } = req.body;
+  try {
+    const serviceCenter = await ServiceCenter.create({ name, location, contactNumber });
+    res.json({ serviceCenter });
+  } catch (error) {
+    console.error('Error creating service center:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
+router.delete('/admin/service-center/:id', async (req, res) => {
+	const { id } = req.body;
+	console.log(req)
+  
+  try {
+    const serviceCenterId = req.params.id;
+    // Find the booking by ID
+    const servicecenter = await ServicePackage.findById(serviceCenterId);
+    if (!servicecenter) {
+      return res.status(404).json({ message: 'Service Center not found' });
+    }
+
+    // Delete the booking
+    await servicepackage.deleteOne();
+
+    res.json({ message: 'Service package deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting service package:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
 
 // Customer routes
 router.post('/customer/register', async (req, res) => {
@@ -292,9 +340,6 @@ router.delete('/customer/bookings/:id', async (req, res) => {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
-    // Check if the logged-in user has permission to delete the booking
-    // Add your custom logic here, based on your application requirements
-    // For example, you can check if the user is the owner of the booking or has admin privileges
 
     // Delete the booking
     await booking.deleteOne();
@@ -460,6 +505,53 @@ router.patch('/service-advisor/bookings/:id', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+// Add Service Package
+router.post('/service-advisor/service-package', async (req, res) => {
+	const { name, description, price } = req.body;
+   try {
+    const servicePackage = await ServicePackage.create({ name, description, price });
+    res.json({ servicePackage });
+  } catch (error) {
+    console.error('Error creating service package:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.get('/service-advisor/service-packages', authMiddleware, async (req, res) => {
+  try {
+    const servicepackages = await ServicePackage.find();
+    res.json({ servicepackages });
+  } catch (error) {
+    console.error('Error retrieving service packages:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
+router.delete('/service-advisor/service-package/:id', async (req, res) => {
+	const { id } = req.body;
+	console.log(req)
+  
+  try {
+    const servicePackageId = req.params.id;
+    // Find the booking by ID
+    const servicepackage = await ServicePackage.findById(servicePackageId);
+    if (!servicepackage) {
+      return res.status(404).json({ message: 'Service Package not found' });
+    }
+
+    // Delete the booking
+    await servicepackage.deleteOne();
+
+    res.json({ message: 'Service package deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting service package:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
 
 // Logout route
 router.post('/logout', authMiddleware, async (req, res) => {
